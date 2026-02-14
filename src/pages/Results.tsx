@@ -53,7 +53,12 @@ const Results = () => {
       const params = new URLSearchParams(window.location.search);
       const sessionId = params.get("session_id");
 
-      if (isPaid) return; // Already verified
+      if (isPaid) {
+        // Ensure we have the email even when returning from localStorage
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.email) setUserEmail(session.user.email);
+        return;
+      }
 
       if (!sessionId) {
         // No session_id — check if user is logged in and has a payment
@@ -62,6 +67,7 @@ const Results = () => {
           navigate("/preview");
           return;
         }
+        setUserEmail(session.user.email || "");
         const { data: payment } = await supabase
           .from("payments")
           .select("id")
