@@ -9,23 +9,16 @@ import { supabase } from "@/integrations/supabase/client";
 
 const Preview = () => {
   const navigate = useNavigate();
-  const { lang, results, setEmail, setPaid } = useHair();
-  const [showEmailCapture, setShowEmailCapture] = useState(false);
-  const [emailInput, setEmailInput] = useState("");
+  const { lang, results } = useHair();
   const [loading, setLoading] = useState(false);
 
   if (!results) { navigate("/"); return null; }
 
   const handleUnlock = async () => {
-    if (!showEmailCapture) { setShowEmailCapture(true); return; }
-    if (!emailInput.trim() || !emailInput.includes("@")) return;
-
     setLoading(true);
-    setEmail(emailInput.trim());
-
     try {
       const { data, error } = await supabase.functions.invoke("create-payment", {
-        body: { email: emailInput.trim() },
+        body: {},
       });
       if (error) throw error;
       if (data?.url) {
@@ -112,21 +105,10 @@ const Preview = () => {
 
         {/* CTA */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.5 }} className="text-center">
-          {showEmailCapture && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} transition={{ duration: 0.3 }} className="mb-4">
-              <input
-                type="email"
-                placeholder={t(lang, "emailPlaceholder")}
-                value={emailInput}
-                onChange={(e) => setEmailInput(e.target.value)}
-                className="w-full px-5 py-3.5 rounded-xl border-2 border-border bg-card text-foreground font-body text-sm focus:outline-none focus:border-gold transition-colors"
-              />
-            </motion.div>
-          )}
           <Button variant="hero" size="lg" className="w-full rounded-full text-base py-6" onClick={handleUnlock} disabled={loading}>
             {loading ? (
               <><Loader2 className="h-4 w-4 animate-spin mr-2" /> {t(lang, "processing")}</>
-            ) : showEmailCapture ? t(lang, "unlockFull") : t(lang, "getFullDiagnosis")}
+            ) : t(lang, "getFullDiagnosis")}
           </Button>
           <p className="text-xs text-muted-foreground mt-3 font-body">{t(lang, "fullDiagnosisAwaits")}</p>
         </motion.div>
