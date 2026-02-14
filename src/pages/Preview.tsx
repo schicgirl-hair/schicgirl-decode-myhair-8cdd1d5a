@@ -29,8 +29,7 @@ const Preview = () => {
       });
       if (error) throw error;
       if (data?.url) {
-        setPaid(true);
-        window.open(data.url, "_blank");
+        window.location.href = data.url;
       }
     } catch (err) {
       console.error("Payment error:", err);
