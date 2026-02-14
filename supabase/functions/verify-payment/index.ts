@@ -13,8 +13,16 @@ serve(async (req) => {
   }
 
   try {
-    const { session_id } = await req.json();
-    if (!session_id || typeof session_id !== "string") {
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { session_id } = body as { session_id?: string };
+    if (!session_id || typeof session_id !== "string" || !session_id.startsWith("cs_") || session_id.length > 255) {
       return new Response(JSON.stringify({ error: "Missing session_id" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
