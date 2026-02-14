@@ -12,10 +12,10 @@ export const quizQuestions: QuizQuestion[] = [
       en: "This helps us understand your hair's porosity",
     },
     options: [
-      { value: "high", label: { fr: "Sèchent vite, deviennent rêches", en: "Dries fast, feels rough quickly" }, emoji: "⚡" },
-      { value: "low", label: { fr: "Mettent très longtemps à sécher", en: "Takes forever to dry, feels slippery" }, emoji: "💧" },
-      { value: "normal", label: { fr: "Sèchent normalement, restent doux", en: "Dries at a normal pace, soft" }, emoji: "✨" },
-      { value: "unknown", label: { fr: "Je ne suis pas sûre", en: "I'm not sure" }, emoji: "🤷🏾‍♀️" },
+      { value: "high", label: { fr: "Sèchent vite, deviennent rêches", en: "Dries fast, feels rough quickly" } },
+      { value: "low", label: { fr: "Mettent très longtemps à sécher", en: "Takes forever to dry, feels slippery" } },
+      { value: "normal", label: { fr: "Sèchent normalement, restent doux", en: "Dries at a normal pace, soft" } },
+      { value: "unknown", label: { fr: "Je ne suis pas sûre", en: "I'm not sure" } },
     ],
   },
   {
@@ -29,10 +29,10 @@ export const quizQuestions: QuizQuestion[] = [
       en: "Take a single strand and feel it between your fingers",
     },
     options: [
-      { value: "fine", label: { fr: "Fines — à peine perceptibles", en: "Fine — barely feel it" }, emoji: "🪡" },
-      { value: "medium", label: { fr: "Moyennes — je les sens", en: "Medium — can feel it" }, emoji: "🧵" },
-      { value: "coarse", label: { fr: "Épaisses — solides et fortes", en: "Coarse — thick and strong" }, emoji: "💪🏾" },
-      { value: "unknown", label: { fr: "Je ne suis pas sûre", en: "I'm not sure" }, emoji: "🤷🏾‍♀️" },
+      { value: "fine", label: { fr: "Fines — à peine perceptibles", en: "Fine — barely feel it" } },
+      { value: "medium", label: { fr: "Moyennes — je les sens", en: "Medium — can feel it" } },
+      { value: "coarse", label: { fr: "Épaisses — solides et fortes", en: "Coarse — thick and strong" } },
+      { value: "unknown", label: { fr: "Je ne suis pas sûre", en: "I'm not sure" } },
     ],
   },
   {
@@ -46,10 +46,10 @@ export const quizQuestions: QuizQuestion[] = [
       en: "Look at your scalp — can you see it easily?",
     },
     options: [
-      { value: "low", label: { fr: "Faible — je vois mon cuir chevelu", en: "Low — I can see my scalp easily" }, emoji: "🌱" },
-      { value: "medium", label: { fr: "Moyenne — un peu visible", en: "Medium — some scalp visible" }, emoji: "🌿" },
-      { value: "high", label: { fr: "Élevée — très fournis", en: "High — very full, can't see scalp" }, emoji: "🌳" },
-      { value: "unknown", label: { fr: "Je ne suis pas sûre", en: "I'm not sure" }, emoji: "🤷🏾‍♀️" },
+      { value: "low", label: { fr: "Faible — je vois mon cuir chevelu", en: "Low — I can see my scalp easily" } },
+      { value: "medium", label: { fr: "Moyenne — un peu visible", en: "Medium — some scalp visible" } },
+      { value: "high", label: { fr: "Élevée — très fournis", en: "High — very full, can't see scalp" } },
+      { value: "unknown", label: { fr: "Je ne suis pas sûre", en: "I'm not sure" } },
     ],
   },
   {
@@ -59,10 +59,10 @@ export const quizQuestions: QuizQuestion[] = [
       en: "How often do you wash your hair?",
     },
     options: [
-      { value: "weekly", label: { fr: "Chaque semaine", en: "Every week" }, emoji: "📅" },
-      { value: "biweekly", label: { fr: "Toutes les 2 semaines", en: "Every 2 weeks" }, emoji: "📆" },
-      { value: "monthly", label: { fr: "Une fois par mois ou moins", en: "Once a month or less" }, emoji: "🗓️" },
-      { value: "unknown", label: { fr: "Ça varie beaucoup", en: "It varies a lot" }, emoji: "🤷🏾‍♀️" },
+      { value: "weekly", label: { fr: "Chaque semaine", en: "Every week" } },
+      { value: "biweekly", label: { fr: "Toutes les 2 semaines", en: "Every 2 weeks" } },
+      { value: "monthly", label: { fr: "Une fois par mois ou moins", en: "Once a month or less" } },
+      { value: "unknown", label: { fr: "Ça varie beaucoup", en: "It varies a lot" } },
     ],
   },
   {
@@ -76,10 +76,10 @@ export const quizQuestions: QuizQuestion[] = [
       en: "Your detangling method impacts breakage significantly",
     },
     options: [
-      { value: "dry", label: { fr: "Sur cheveux secs", en: "On dry hair" }, emoji: "🚫" },
-      { value: "wet", label: { fr: "Sur cheveux mouillés à l'eau seule", en: "On wet hair with water only" }, emoji: "💦" },
-      { value: "conditioner", label: { fr: "Avec après-shampoing/masque", en: "With conditioner/mask applied" }, emoji: "✅" },
-      { value: "rarely", label: { fr: "Je démêle rarement", en: "I rarely detangle" }, emoji: "😬" },
+      { value: "dry", label: { fr: "Sur cheveux secs", en: "On dry hair" } },
+      { value: "wet", label: { fr: "Sur cheveux mouillés à l'eau seule", en: "On wet hair with water only" } },
+      { value: "conditioner", label: { fr: "Avec après-shampoing/masque", en: "With conditioner/mask applied" } },
+      { value: "rarely", label: { fr: "Je démêle rarement", en: "I rarely detangle" } },
     ],
   },
   {
@@ -93,10 +93,10 @@ export const quizQuestions: QuizQuestion[] = [
       en: "How do you refresh your hair mid-week?",
     },
     options: [
-      { value: "water", label: { fr: "Brumisation d'eau", en: "Water mist / spray" }, emoji: "💨" },
-      { value: "leavein", label: { fr: "Leave-in / soin sans rinçage", en: "Leave-in conditioner" }, emoji: "🧴" },
-      { value: "cream", label: { fr: "Crème ou beurre", en: "Cream or butter" }, emoji: "🧈" },
-      { value: "none", label: { fr: "Rien — j'attends le prochain lavage", en: "Nothing — I wait until wash day" }, emoji: "⏳" },
+      { value: "water", label: { fr: "Brumisation d'eau", en: "Water mist / spray" } },
+      { value: "leavein", label: { fr: "Leave-in / soin sans rinçage", en: "Leave-in conditioner" } },
+      { value: "cream", label: { fr: "Crème ou beurre", en: "Cream or butter" } },
+      { value: "none", label: { fr: "Rien — j'attends le prochain lavage", en: "Nothing — I wait until wash day" } },
     ],
   },
   {
@@ -110,10 +110,10 @@ export const quizQuestions: QuizQuestion[] = [
       en: "Sealing locks in hydration so it doesn't evaporate",
     },
     options: [
-      { value: "oil", label: { fr: "Oui — avec une huile", en: "Yes — with an oil" }, emoji: "🫒" },
-      { value: "butter", label: { fr: "Oui — avec un beurre ou crème", en: "Yes — with a butter or cream" }, emoji: "🧈" },
-      { value: "both", label: { fr: "Les deux : huile + beurre", en: "Both oil and butter" }, emoji: "✨" },
-      { value: "none", label: { fr: "Non — je saute cette étape", en: "No — I skip this step" }, emoji: "❌" },
+      { value: "oil", label: { fr: "Oui — avec une huile", en: "Yes — with an oil" } },
+      { value: "butter", label: { fr: "Oui — avec un beurre ou crème", en: "Yes — with a butter or cream" } },
+      { value: "both", label: { fr: "Les deux : huile + beurre", en: "Both oil and butter" } },
+      { value: "none", label: { fr: "Non — je saute cette étape", en: "No — I skip this step" } },
     ],
   },
   {
@@ -127,9 +127,9 @@ export const quizQuestions: QuizQuestion[] = [
       en: "Protein strengthens but too much causes brittleness",
     },
     options: [
-      { value: "often", label: { fr: "Chaque lavage ou chaque semaine", en: "Every wash or weekly" }, emoji: "💪🏾" },
-      { value: "sometimes", label: { fr: "De temps en temps (mensuel)", en: "Occasionally (monthly)" }, emoji: "✨" },
-      { value: "never", label: { fr: "Jamais / je ne sais pas ce que c'est", en: "Never / I don't know what that is" }, emoji: "🤷🏾‍♀️" },
+      { value: "often", label: { fr: "Chaque lavage ou chaque semaine", en: "Every wash or weekly" } },
+      { value: "sometimes", label: { fr: "De temps en temps (mensuel)", en: "Occasionally (monthly)" } },
+      { value: "never", label: { fr: "Jamais / je ne sais pas ce que c'est", en: "Never / I don't know what that is" } },
     ],
   },
   {
@@ -143,9 +143,9 @@ export const quizQuestions: QuizQuestion[] = [
       en: "Flat irons, blow dryers, curling wands, etc.",
     },
     options: [
-      { value: "never", label: { fr: "Jamais ou très rarement", en: "Never or very rarely" }, emoji: "🚫" },
-      { value: "sometimes", label: { fr: "Quelques fois par mois", en: "A few times a month" }, emoji: "🔥" },
-      { value: "often", label: { fr: "Chaque semaine ou plus", en: "Weekly or more" }, emoji: "♨️" },
+      { value: "never", label: { fr: "Jamais ou très rarement", en: "Never or very rarely" } },
+      { value: "sometimes", label: { fr: "Quelques fois par mois", en: "A few times a month" } },
+      { value: "often", label: { fr: "Chaque semaine ou plus", en: "Weekly or more" } },
     ],
   },
   {
@@ -155,10 +155,10 @@ export const quizQuestions: QuizQuestion[] = [
       en: "What protective styles do you wear most?",
     },
     options: [
-      { value: "braids", label: { fr: "Tresses / vanilles", en: "Braids / twists" }, emoji: "🔗" },
-      { value: "wigs", label: { fr: "Perruques / tissages", en: "Wigs / weaves" }, emoji: "💇🏾‍♀️" },
-      { value: "afro", label: { fr: "Afro / wash-and-go", en: "Afro / wash-and-go" }, emoji: "🌸" },
-      { value: "tightBuns", label: { fr: "Chignons serrés / cornrows", en: "Tight buns / cornrows" }, emoji: "⚠️" },
+      { value: "braids", label: { fr: "Tresses / vanilles", en: "Braids / twists" } },
+      { value: "wigs", label: { fr: "Perruques / tissages", en: "Wigs / weaves" } },
+      { value: "afro", label: { fr: "Afro / wash-and-go", en: "Afro / wash-and-go" } },
+      { value: "tightBuns", label: { fr: "Chignons serrés / cornrows", en: "Tight buns / cornrows" } },
     ],
   },
   {
@@ -168,10 +168,10 @@ export const quizQuestions: QuizQuestion[] = [
       en: "How do you protect your hair at night?",
     },
     options: [
-      { value: "bonnet", label: { fr: "Bonnet en satin", en: "Satin bonnet" }, emoji: "🧢" },
-      { value: "pillowcase", label: { fr: "Taie d'oreiller en satin", en: "Satin pillowcase" }, emoji: "🛏️" },
-      { value: "both", label: { fr: "Bonnet + taie en satin", en: "Both bonnet + pillowcase" }, emoji: "✨" },
-      { value: "none", label: { fr: "Rien — taie en coton", en: "Nothing — cotton pillowcase" }, emoji: "😰" },
+      { value: "bonnet", label: { fr: "Bonnet en satin", en: "Satin bonnet" } },
+      { value: "pillowcase", label: { fr: "Taie d'oreiller en satin", en: "Satin pillowcase" } },
+      { value: "both", label: { fr: "Bonnet + taie en satin", en: "Both bonnet + pillowcase" } },
+      { value: "none", label: { fr: "Rien — taie en coton", en: "Nothing — cotton pillowcase" } },
     ],
   },
   {
@@ -181,10 +181,10 @@ export const quizQuestions: QuizQuestion[] = [
       en: "How would you describe your scalp condition?",
     },
     options: [
-      { value: "normal", label: { fr: "Sain, aucun problème", en: "Healthy, no issues" }, emoji: "✅" },
-      { value: "dandruff", label: { fr: "Pellicules / desquamation", en: "Dandruff / flaking" }, emoji: "❄️" },
-      { value: "itching", label: { fr: "Démangeaisons ou sensibilité", en: "Itchy or sensitive" }, emoji: "😣" },
-      { value: "buildup", label: { fr: "Accumulation de produits", en: "Heavy buildup / clogged" }, emoji: "🧱" },
+      { value: "normal", label: { fr: "Sain, aucun problème", en: "Healthy, no issues" } },
+      { value: "dandruff", label: { fr: "Pellicules / desquamation", en: "Dandruff / flaking" } },
+      { value: "itching", label: { fr: "Démangeaisons ou sensibilité", en: "Itchy or sensitive" } },
+      { value: "buildup", label: { fr: "Accumulation de produits", en: "Heavy buildup / clogged" } },
     ],
   },
 ];
