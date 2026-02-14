@@ -12,23 +12,11 @@ serve(async (req) => {
   }
 
   try {
-    const { email } = await req.json();
-    if (!email) throw new Error("Email is required");
-
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
 
-    // Check if customer exists
-    const customers = await stripe.customers.list({ email, limit: 1 });
-    let customerId;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-    }
-
     const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      customer_email: customerId ? undefined : email,
       line_items: [
         {
           price: "price_1T0cJr07i779Op3QSZBmvBDC",
