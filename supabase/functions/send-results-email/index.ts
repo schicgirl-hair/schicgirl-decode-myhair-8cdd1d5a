@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,23 +12,137 @@ serve(async (req) => {
   }
 
   try {
-    const { email, results, lang } = await req.json();
+    // --- Authentication check ---
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    if (!email || !results) {
-      return new Response(JSON.stringify({ error: "Missing email or results" }), {
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const userEmail = claimsData.claims.email as string | undefined;
+
+    // --- Input validation ---
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { email, results, lang } = body as { email?: string; results?: unknown; lang?: string };
+
+    if (!email || typeof email !== "string" || email.length > 255 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return new Response(JSON.stringify({ error: "Invalid email" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Only allow sending to the authenticated user's own email
+    if (userEmail && email.toLowerCase() !== userEmail.toLowerCase()) {
+      return new Response(JSON.stringify({ error: "Email mismatch" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!results || typeof results !== "object") {
+      return new Response(JSON.stringify({ error: "Missing or invalid results" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (lang && !["en", "fr"].includes(lang)) {
+      return new Response(JSON.stringify({ error: "Invalid language" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Limit payload size (~100KB max)
+    const payloadStr = JSON.stringify(results);
+    if (payloadStr.length > 100_000) {
+      return new Response(JSON.stringify({ error: "Payload too large" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const isFr = lang === "fr";
-    const r = results;
+    const r = results as Record<string, any>;
 
+    // --- Build HTML email (same as before) ---
     const severityLabel = r.severityLabel === "Low" ? (isFr ? "Faible" : "Low") :
       r.severityLabel === "Moderate" ? (isFr ? "Modéré" : "Moderate") : (isFr ? "Sévère" : "Severe");
 
-    // Build HTML email
-    const html = `
+    const html = buildEmailHtml(r, isFr, severityLabel);
+
+    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    if (!RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY not configured");
+    }
+
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "SchicGirl <noreply@send.decodehair>",
+        to: [email],
+        subject: isFr ? "🌿 Ton Diagnostic Capillaire Complet — SchicGirl" : "🌿 Your Complete Hair Diagnosis — SchicGirl",
+        html,
+      }),
+    });
+
+    if (!res.ok) {
+      const errBody = await res.text();
+      console.error("Resend error:", errBody);
+      throw new Error(`Resend API error: ${res.status}`);
+    }
+
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Email send failed:", error);
+    return new Response(JSON.stringify({ error: "Failed to send email" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
+
+function escapeHtml(str: unknown): string {
+  if (typeof str !== "string") return "";
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function buildEmailHtml(r: Record<string, any>, isFr: boolean, severityLabel: string): string {
+  const e = escapeHtml;
+  return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -69,119 +184,101 @@ serve(async (req) => {
     <p>${isFr ? "Résultats personnalisés par SchicGirl" : "Personalized results by SchicGirl"}</p>
   </div>
 
-  <!-- Hair Identity -->
   <div class="card">
     <h3>⭐ ${isFr ? "Ton Identité Capillaire" : "Your Hair Identity"}</h3>
     <div class="highlight-box">
-      <strong style="font-size:18px;color:#b8944a;">${r.archetype.name}</strong>
-      <p style="margin:8px 0 0;">${r.archetype.description}</p>
+      <strong style="font-size:18px;color:#b8944a;">${e(r.archetype?.name)}</strong>
+      <p style="margin:8px 0 0;">${e(r.archetype?.description)}</p>
     </div>
   </div>
 
-  <!-- Severity -->
   <div class="card">
     <h3>⚠️ ${isFr ? "Sévérité de la Sécheresse" : "Dryness Severity"}</h3>
-    <p class="severity-score severity-${r.severityLabel.toLowerCase()}">${r.severityScore}<span style="font-size:16px;color:#8a7a6d;font-weight:400;">/100 — ${severityLabel}</span></p>
+    <p class="severity-score severity-${e(r.severityLabel?.toLowerCase())}">${e(r.severityScore)}<span style="font-size:16px;color:#8a7a6d;font-weight:400;">/100 — ${e(severityLabel)}</span></p>
   </div>
 
-  <!-- Surprising Insight -->
   <div class="highlight-box">
     <strong>${isFr ? "💡 Le savais-tu ?" : "💡 Did you know?"}</strong>
-    <p style="margin:8px 0 0;">${r.surprisingInsight}</p>
+    <p style="margin:8px 0 0;">${e(r.surprisingInsight)}</p>
   </div>
 
-  <!-- Root Causes -->
   <div class="card">
     <h3>💡 ${isFr ? "Causes Profondes" : "Root Causes"}</h3>
-    ${r.primaryCauses.map((c: any) => `<div style="margin-bottom:12px;"><strong>${c.cause}</strong><p style="margin:4px 0 0;">${c.explanation}</p></div>`).join("")}
+    ${Array.isArray(r.primaryCauses) ? r.primaryCauses.map((c: any) => `<div style="margin-bottom:12px;"><strong>${e(c.cause)}</strong><p style="margin:4px 0 0;">${e(c.explanation)}</p></div>`).join("") : ""}
   </div>
 
-  <!-- Contributing Factors -->
   <div class="card">
     <h3>🔬 ${isFr ? "Facteurs Contributifs" : "Contributing Factors"}</h3>
-    <ul>${r.contributingFactors.map((f: string) => `<li>${f}</li>`).join("")}</ul>
+    <ul>${Array.isArray(r.contributingFactors) ? r.contributingFactors.map((f: string) => `<li>${e(f)}</li>`).join("") : ""}</ul>
   </div>
 
-  <!-- Biggest Mistake -->
   <div class="warning-box">
     <strong>⚠️ ${isFr ? "Plus Grande Erreur Détectée" : "Biggest Mistake Detected"}</strong>
-    <p style="margin:8px 0 0;">${r.biggestMistake}</p>
+    <p style="margin:8px 0 0;">${e(r.biggestMistake)}</p>
   </div>
 
-  <!-- Empowering + Immediate Action -->
   <div class="highlight-box">
     <strong>${isFr ? "✨ Rappelle-toi" : "✨ Remember"}</strong>
-    <p style="margin:8px 0 0;font-style:italic;">${r.empoweringSentence}</p>
+    <p style="margin:8px 0 0;font-style:italic;">${e(r.empoweringSentence)}</p>
     <hr style="border:none;border-top:1px solid #e8e0d8;margin:12px 0;">
     <strong style="color:#b8944a;">${isFr ? "🎯 Action immédiate" : "🎯 Immediate action"}</strong>
-    <p style="margin:8px 0 0;">${r.immediateAction}</p>
+    <p style="margin:8px 0 0;">${e(r.immediateAction)}</p>
   </div>
 
-  <!-- Mask Recommendation -->
   <div class="card">
     <h3>💧 ${isFr ? "Masque Recommandé" : "Smart Mask Recommendation"}</h3>
-    <strong style="font-size:16px;">${r.maskRecommendation.type}</strong>
-    <p>${r.maskRecommendation.description}</p>
-    <p style="color:#b8944a;font-weight:600;">📅 ${r.maskRecommendation.frequency}</p>
-    <p style="font-size:12px;color:#8a7a6d;background:#f5f0eb;padding:10px;border-radius:8px;">⚠️ ${r.maskRecommendation.warning}</p>
+    <strong style="font-size:16px;">${e(r.maskRecommendation?.type)}</strong>
+    <p>${e(r.maskRecommendation?.description)}</p>
+    <p style="color:#b8944a;font-weight:600;">📅 ${e(r.maskRecommendation?.frequency)}</p>
+    <p style="font-size:12px;color:#8a7a6d;background:#f5f0eb;padding:10px;border-radius:8px;">⚠️ ${e(r.maskRecommendation?.warning)}</p>
   </div>
 
-  <!-- Minimum Routine -->
   <div class="card">
     <h3>✅ ${isFr ? "Routine Minimum" : "Minimum Routine"}</h3>
     <p style="font-size:12px;color:#8a7a6d;margin-bottom:12px;">${isFr ? "L'essentiel — simple et efficace" : "The essentials — simple and effective"}</p>
-    ${r.minimumRoutine.map((s: any) => `<div class="step"><div class="step-num">${s.step}</div><div><strong>${s.action}</strong><br><span style="font-size:12px;color:#8a7a6d;">${s.detail}</span></div></div>`).join("")}
+    ${Array.isArray(r.minimumRoutine) ? r.minimumRoutine.map((s: any) => `<div class="step"><div class="step-num">${e(s.step)}</div><div><strong>${e(s.action)}</strong><br><span style="font-size:12px;color:#8a7a6d;">${e(s.detail)}</span></div></div>`).join("") : ""}
   </div>
 
-  <!-- Ideal Routine -->
   <div class="card">
     <h3>✨ ${isFr ? "Routine Idéale" : "Ideal Routine"}</h3>
-    ${r.idealRoutine.map((s: any) => `<div class="step"><div class="step-num">${s.step}</div><div><strong>${s.action}</strong><br><span class="day-badge">${s.frequency}</span><br><span style="font-size:12px;color:#8a7a6d;">${s.detail}</span></div></div>`).join("")}
+    ${Array.isArray(r.idealRoutine) ? r.idealRoutine.map((s: any) => `<div class="step"><div class="step-num">${e(s.step)}</div><div><strong>${e(s.action)}</strong><br><span class="day-badge">${e(s.frequency)}</span><br><span style="font-size:12px;color:#8a7a6d;">${e(s.detail)}</span></div></div>`).join("") : ""}
   </div>
 
-  <!-- 7-Day Recovery Plan -->
   <div class="card">
     <h3>📅 ${isFr ? "Plan de Récupération 7 Jours" : "7-Day Recovery Plan"}</h3>
-    ${r.recoveryPlan.map((d: any) => `<div class="timeline-item"><span class="day-badge">${d.day}</span><p style="margin:4px 0 0;">${d.action}</p></div>`).join("")}
+    ${Array.isArray(r.recoveryPlan) ? r.recoveryPlan.map((d: any) => `<div class="timeline-item"><span class="day-badge">${e(d.day)}</span><p style="margin:4px 0 0;">${e(d.action)}</p></div>`).join("") : ""}
   </div>
 
-  <!-- Ingredients Avoid -->
   <div class="card">
     <h3>❌ ${isFr ? "Ingrédients à Éviter" : "Ingredients to Avoid"}</h3>
-    ${r.ingredientsAvoid.map((i: any) => `<div style="margin-bottom:8px;"><strong class="ingredient-bad">✗ ${i.name}</strong><br><span style="font-size:12px;color:#8a7a6d;">${i.reason}</span></div>`).join("")}
+    ${Array.isArray(r.ingredientsAvoid) ? r.ingredientsAvoid.map((i: any) => `<div style="margin-bottom:8px;"><strong class="ingredient-bad">✗ ${e(i.name)}</strong><br><span style="font-size:12px;color:#8a7a6d;">${e(i.reason)}</span></div>`).join("") : ""}
   </div>
 
-  <!-- Ingredients Seek -->
   <div class="card">
     <h3>🌿 ${isFr ? "Ingrédients à Rechercher" : "Ingredients to Look For"}</h3>
-    ${r.ingredientsSeek.map((i: any) => `<div style="margin-bottom:8px;"><strong class="ingredient-good">✓ ${i.name}</strong><br><span style="font-size:12px;color:#8a7a6d;">${i.reason}</span></div>`).join("")}
+    ${Array.isArray(r.ingredientsSeek) ? r.ingredientsSeek.map((i: any) => `<div style="margin-bottom:8px;"><strong class="ingredient-good">✓ ${e(i.name)}</strong><br><span style="font-size:12px;color:#8a7a6d;">${e(i.reason)}</span></div>`).join("") : ""}
   </div>
 
-  <!-- Timeline -->
   <div class="card">
     <h3>🔄 ${isFr ? "Calendrier d'Amélioration" : "Improvement Timeline"}</h3>
-    ${r.timeline.map((tl: any) => `<div class="timeline-item"><strong style="color:#b8944a;">${tl.period}</strong><p style="margin:4px 0 0;">${tl.expectation}</p></div>`).join("")}
+    ${Array.isArray(r.timeline) ? r.timeline.map((tl: any) => `<div class="timeline-item"><strong style="color:#b8944a;">${e(tl.period)}</strong><p style="margin:4px 0 0;">${e(tl.expectation)}</p></div>`).join("") : ""}
   </div>
 
-  <!-- Long-term Strategy -->
   <div class="card">
     <h3>🛡️ ${isFr ? "Stratégie Long Terme" : "Long-Term Strategy"}</h3>
-    <p>${r.longTermStrategy}</p>
+    <p>${e(r.longTermStrategy)}</p>
   </div>
 
-  <!-- Confidence Message -->
   <div class="highlight-box" style="text-align:center;">
     <p style="font-size:16px;">❤️</p>
-    <p>${r.confidenceMessage}</p>
+    <p>${e(r.confidenceMessage)}</p>
   </div>
 
-  <!-- Coach Note -->
   <div class="card">
     <h3>✂️ ${isFr ? "Un Message de Ta Coach Capillaire" : "A Message From Your Hair Coach"}</h3>
-    <p style="white-space:pre-line;">${r.coachNote}</p>
+    <p style="white-space:pre-line;">${e(r.coachNote)}</p>
   </div>
 
-  <!-- CTA -->
   <div style="text-align:center;padding:24px 0;">
     <p style="font-weight:600;font-size:16px;margin-bottom:8px;">${isFr ? "Prête pour l'étape suivante ?" : "Ready for the Next Level?"}</p>
     <p style="font-size:13px;color:#8a7a6d;margin-bottom:16px;">${isFr ? "Je crée des routines complètes et personnalisées adaptées à ton profil." : "I create complete, personalized routines tailored to your profile."}</p>
@@ -194,40 +291,4 @@ serve(async (req) => {
 </div>
 </body>
 </html>`;
-
-    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    if (!RESEND_API_KEY) {
-      throw new Error("RESEND_API_KEY not configured");
-    }
-
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: "SchicGirl <noreply@send.decodehair>",
-        to: [email],
-        subject: isFr ? "🌿 Ton Diagnostic Capillaire Complet — SchicGirl" : "🌿 Your Complete Hair Diagnosis — SchicGirl",
-        html,
-      }),
-    });
-
-    if (!res.ok) {
-      const errBody = await res.text();
-      console.error("Resend error:", errBody);
-      throw new Error(`Resend API error: ${res.status}`);
-    }
-
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  } catch (error) {
-    console.error("Email send failed:", error);
-    return new Response(JSON.stringify({ error: "Failed to send email" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-});
+}
