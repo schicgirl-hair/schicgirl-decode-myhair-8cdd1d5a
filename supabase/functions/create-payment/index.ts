@@ -28,7 +28,7 @@ serve(async (req) => {
 
     // No auth required — Stripe collects the email
     const session = await stripe.checkout.sessions.create({
-      line_items: [{ price: "price_1T0mxQ07i779Op3QNQDNgIbh", quantity: 1 }],
+      line_items: [{ price: "price_1T0cJr07i779Op3QSZBmvBDC", quantity: 1 }],
       mode: "payment",
       success_url: `${resolvedOrigin}/results?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${resolvedOrigin}/preview`,
