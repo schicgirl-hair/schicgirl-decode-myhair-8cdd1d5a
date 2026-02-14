@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useHair } from "@/context/HairContext";
 import { t } from "@/lib/i18n";
@@ -7,8 +7,9 @@ import { motion } from "framer-motion";
 import {
   Sparkles, AlertTriangle, Lightbulb, Droplets, Shield, Calendar,
   CheckCircle2, XCircle, Heart, Star, ArrowRight, RotateCcw,
-  Scissors, FlaskConical, Leaf
+  Scissors, FlaskConical, Leaf, Loader2
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const f = (delay: number) => ({
   initial: { opacity: 0, y: 20 },
@@ -35,18 +36,75 @@ function Section({ title, icon: Icon, children, delay = 0 }: {
 const Results = () => {
   const navigate = useNavigate();
   const { lang, results, isPaid, reset, setPaid } = useHair();
+  const [verifying, setVerifying] = useState(false);
 
-  // Check URL param for paid status from Stripe redirect
+  // Server-side payment verification
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("paid") === "true" && !isPaid) {
-      setPaid(true);
-      window.history.replaceState({}, "", "/results");
-    }
-  }, [isPaid, setPaid]);
+    const verifyPayment = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get("session_id");
 
-  if (!results || (!isPaid && new URLSearchParams(window.location.search).get("paid") !== "true")) {
-    navigate("/");
+      if (isPaid) return; // Already verified
+
+      if (!sessionId) {
+        // No session_id and not paid — check DB for existing payment
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          navigate("/preview");
+          return;
+        }
+        const { data: payment } = await supabase
+          .from("payments")
+          .select("id")
+          .eq("user_id", session.user.id)
+          .eq("status", "paid")
+          .maybeSingle();
+        if (payment) {
+          setPaid(true);
+        } else {
+          navigate("/preview");
+        }
+        return;
+      }
+
+      // Verify with server
+      setVerifying(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("verify-payment", {
+          body: { session_id: sessionId },
+        });
+        if (error) throw error;
+        if (data?.paid) {
+          setPaid(true);
+          window.history.replaceState({}, "", "/results");
+        } else {
+          navigate("/preview");
+        }
+      } catch (err) {
+        console.error("Verification error:", err);
+        navigate("/preview");
+      } finally {
+        setVerifying(false);
+      }
+    };
+
+    verifyPayment();
+  }, [isPaid, setPaid, navigate]);
+
+  if (verifying) {
+    return (
+      <main className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-gold mx-auto" />
+          <p className="font-body text-muted-foreground">
+            {lang === "fr" ? "Vérification du paiement..." : "Verifying payment..."}
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!results || !isPaid) {
     return null;
   }
 
