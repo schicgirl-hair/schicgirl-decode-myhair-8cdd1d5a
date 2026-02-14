@@ -95,6 +95,8 @@ const Results = () => {
         if (data?.paid) {
           setPaid(true);
           setUserEmail(data.email || "");
+          setEmailSent(false);
+          try { localStorage.removeItem("hair-email-sent"); } catch {}
           window.history.replaceState({}, "", "/results");
 
           // Auto-login with magic link token
