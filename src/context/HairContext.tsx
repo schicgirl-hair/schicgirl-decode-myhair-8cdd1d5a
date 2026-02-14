@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { DiagnosisResult } from "@/lib/types";
 import { generateDiagnosis } from "@/lib/diagnosis";
 import { Lang } from "@/lib/i18n";
@@ -22,17 +22,46 @@ interface HairContextType extends HairState {
   reset: () => void;
 }
 
+const STORAGE_KEY = "hair-diagnosis-state";
+
+function loadState(): Partial<HairState> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return {};
+}
+
+function saveState(state: HairState) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      lang: state.lang,
+      answers: state.answers,
+      currentStep: state.currentStep,
+      results: state.results,
+      email: state.email,
+      isPaid: state.isPaid,
+    }));
+  } catch {}
+}
+
 const HairContext = createContext<HairContextType | undefined>(undefined);
 
 export function HairProvider({ children }: { children: ReactNode }) {
+  const saved = loadState();
+
   const [state, setState] = useState<HairState>({
-    lang: "fr",
-    answers: {},
-    currentStep: 0,
-    results: null,
-    email: "",
-    isPaid: false,
+    lang: (saved.lang as Lang) || "fr",
+    answers: saved.answers || {},
+    currentStep: saved.currentStep || 0,
+    results: saved.results || null,
+    email: saved.email || "",
+    isPaid: saved.isPaid || false,
   });
+
+  useEffect(() => {
+    saveState(state);
+  }, [state]);
 
   const setLang = (lang: Lang) => setState((prev) => ({ ...prev, lang }));
   const setAnswer = (questionId: string, value: string | string[]) =>
