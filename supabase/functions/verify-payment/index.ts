@@ -13,46 +13,10 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    const userId = claimsData.claims.sub;
-
     const { session_id } = await req.json();
     if (!session_id || typeof session_id !== "string") {
       return new Response(JSON.stringify({ error: "Missing session_id" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Check if already verified
-    const { data: existing } = await supabase
-      .from("payments")
-      .select("id, status")
-      .eq("stripe_session_id", session_id)
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    if (existing?.status === "paid") {
-      return new Response(JSON.stringify({ paid: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -64,19 +28,90 @@ serve(async (req) => {
     const session = await stripe.checkout.sessions.retrieve(session_id);
     const paid = session.payment_status === "paid";
 
-    if (paid) {
-      if (existing) {
-        await supabase.from("payments").update({ status: "paid" }).eq("id", existing.id);
-      } else {
-        await supabase.from("payments").insert({
-          user_id: userId,
-          stripe_session_id: session_id,
-          status: "paid",
-        });
-      }
+    if (!paid) {
+      return new Response(JSON.stringify({ paid: false }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    return new Response(JSON.stringify({ paid }), {
+    const customerEmail = session.customer_details?.email;
+    if (!customerEmail) {
+      return new Response(JSON.stringify({ error: "No email found in payment session" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Use service role to manage users and payments
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    // Check if user already exists
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const existingUser = existingUsers?.users?.find(
+      (u) => u.email === customerEmail
+    );
+
+    let userId: string;
+
+    if (existingUser) {
+      userId = existingUser.id;
+    } else {
+      // Create a new user with a random password (they'll set their own later)
+      const tempPassword = crypto.randomUUID();
+      const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email: customerEmail,
+        password: tempPassword,
+        email_confirm: true,
+      });
+      if (createError || !newUser.user) {
+        throw new Error(`Failed to create user: ${createError?.message}`);
+      }
+      userId = newUser.user.id;
+    }
+
+    // Record payment
+    const { data: existingPayment } = await supabaseAdmin
+      .from("payments")
+      .select("id")
+      .eq("stripe_session_id", session_id)
+      .maybeSingle();
+
+    if (existingPayment) {
+      await supabaseAdmin.from("payments").update({ status: "paid", user_id: userId }).eq("id", existingPayment.id);
+    } else {
+      await supabaseAdmin.from("payments").insert({
+        user_id: userId,
+        stripe_session_id: session_id,
+        status: "paid",
+      });
+    }
+
+    // Generate a magic link so the frontend can auto-sign the user in
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: "magiclink",
+      email: customerEmail,
+    });
+
+    if (linkError || !linkData) {
+      // Payment is verified but couldn't auto-login — still return paid
+      console.error("Magic link generation failed:", linkError);
+      return new Response(JSON.stringify({ paid: true, email: customerEmail }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Extract the token_hash from the generated link
+    const url = new URL(linkData.properties.action_link);
+    const tokenHash = url.searchParams.get("token_hash") || url.hash;
+
+    return new Response(JSON.stringify({
+      paid: true,
+      email: customerEmail,
+      token_hash: tokenHash,
+      needs_password: !existingUser,
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
