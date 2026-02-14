@@ -73,6 +73,49 @@ serve(async (req) => {
       });
     }
 
+    // Validate results structure to prevent malformed payloads
+    const r_check = results as Record<string, unknown>;
+    const requiredStringFields = ["surprisingInsight", "biggestMistake", "empoweringSentence", "immediateAction", "longTermStrategy", "confidenceMessage", "coachNote"];
+    const requiredObjectFields = ["archetype", "maskRecommendation"];
+    const requiredArrayFields = ["primaryCauses", "contributingFactors", "minimumRoutine", "idealRoutine", "recoveryPlan", "ingredientsAvoid", "ingredientsSeek", "timeline"];
+
+    for (const f of requiredStringFields) {
+      if (typeof r_check[f] !== "string") {
+        return new Response(JSON.stringify({ error: `Invalid results: missing ${f}` }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+    for (const f of requiredObjectFields) {
+      if (!r_check[f] || typeof r_check[f] !== "object" || Array.isArray(r_check[f])) {
+        return new Response(JSON.stringify({ error: `Invalid results: missing ${f}` }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+    for (const f of requiredArrayFields) {
+      if (!Array.isArray(r_check[f])) {
+        return new Response(JSON.stringify({ error: `Invalid results: missing ${f}` }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+    if (typeof r_check.severityScore !== "number" || r_check.severityScore < 0 || r_check.severityScore > 100) {
+      return new Response(JSON.stringify({ error: "Invalid results: invalid severityScore" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!["Low", "Moderate", "Severe"].includes(r_check.severityLabel as string)) {
+      return new Response(JSON.stringify({ error: "Invalid results: invalid severityLabel" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (lang && !["en", "fr"].includes(lang)) {
       return new Response(JSON.stringify({ error: "Invalid language" }), {
         status: 400,
