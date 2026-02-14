@@ -12,6 +12,9 @@ serve(async (req) => {
   }
 
   try {
+    const body = await req.json().catch(() => ({}));
+    const origin = req.headers.get("origin") || body.origin || "https://schicgirl-decode-myhair.lovable.app";
+
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
@@ -24,8 +27,8 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: `${req.headers.get("origin")}/results?paid=true`,
-      cancel_url: `${req.headers.get("origin")}/preview`,
+      success_url: `${origin}/results?paid=true`,
+      cancel_url: `${origin}/preview`,
     });
 
     return new Response(JSON.stringify({ url: session.url }), {
