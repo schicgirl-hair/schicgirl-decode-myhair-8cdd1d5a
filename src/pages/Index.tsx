@@ -2,28 +2,48 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Shield, Leaf, Lock } from "lucide-react";
+import { useHair } from "@/context/HairContext";
+import { t, Lang } from "@/lib/i18n";
 import heroImage from "@/assets/hero-hair.jpg";
-
-const trustItems = [
-  { icon: Leaf, text: "Based on natural hair science" },
-  { icon: Shield, text: "Natural-hair-safe only" },
-  { icon: Lock, text: "Privacy protected" },
-];
 
 const Index = () => {
   const navigate = useNavigate();
+  const { lang, setLang } = useHair();
+
+  const trustItems = [
+    { icon: Leaf, text: t(lang, "trust1") },
+    { icon: Shield, text: t(lang, "trust2") },
+    { icon: Lock, text: t(lang, "trust3") },
+  ];
 
   return (
     <main className="min-h-screen bg-background flex flex-col">
-      {/* Hero Section */}
-      <div className="relative flex-1 flex flex-col items-center justify-center px-6 py-16 overflow-hidden">
-        {/* Background image */}
+      {/* Language Selector */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex justify-center gap-3 pt-6 px-6"
+      >
+        {([["fr", "🇫🇷 Français"], ["en", "🇬🇧 English"]] as [Lang, string][]).map(([code, label]) => (
+          <button
+            key={code}
+            onClick={() => setLang(code)}
+            className={`px-5 py-2.5 rounded-full text-sm font-body font-medium transition-all duration-200 ${
+              lang === code
+                ? "gradient-gold text-accent-foreground shadow-gold"
+                : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </motion.div>
+
+      {/* Hero */}
+      <div className="relative flex-1 flex flex-col items-center justify-center px-6 py-12 overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img
-            src={heroImage}
-            alt="Natural hair texture with golden accents"
-            className="w-full h-full object-cover opacity-20"
-          />
+          <img src={heroImage} alt="Natural hair texture" className="w-full h-full object-cover opacity-20" />
           <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
         </div>
 
@@ -33,7 +53,6 @@ const Index = () => {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="relative z-10 max-w-lg mx-auto text-center"
         >
-          {/* Badge */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -42,22 +61,19 @@ const Index = () => {
           >
             <span className="h-2 w-2 rounded-full gradient-gold" />
             <span className="text-sm font-body font-medium text-muted-foreground">
-              AI-Powered Hair Analysis
+              {t(lang, "badge")}
             </span>
           </motion.div>
 
-          {/* Title */}
           <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold text-foreground leading-tight mb-4">
-            Why Is My{" "}
-            <span className="text-gradient-gold">Hair Dry</span>?
+            {t(lang, "title1")}{" "}
+            <span className="text-gradient-gold">{t(lang, "titleHighlight")}</span>?
           </h1>
 
-          {/* Subtitle */}
           <p className="font-body text-lg sm:text-xl text-muted-foreground mb-10 max-w-md mx-auto leading-relaxed">
-            Stop guessing. Diagnose the real reason in 60 seconds.
+            {t(lang, "subtitle")}
           </p>
 
-          {/* CTA */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -69,12 +85,11 @@ const Index = () => {
               className="text-lg px-10 py-6 rounded-full"
               onClick={() => navigate("/quiz")}
             >
-              Start My Analysis
+              {t(lang, "cta")}
             </Button>
           </motion.div>
         </motion.div>
 
-        {/* Trust badges */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

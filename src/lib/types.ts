@@ -1,28 +1,29 @@
+import { Lang } from "./i18n";
+
 export interface QuizQuestion {
   id: string;
-  question: string;
-  subtitle?: string;
+  question: { fr: string; en: string };
+  subtitle?: { fr: string; en: string };
   options: QuizOption[];
   multiSelect?: boolean;
-  condition?: (answers: Record<string, string | string[]>) => boolean;
 }
 
 export interface QuizOption {
   value: string;
-  label: string;
+  label: { fr: string; en: string };
   emoji?: string;
 }
 
 export interface DiagnosisResult {
-  archetype: {
-    name: string;
-    description: string;
-  };
+  archetype: { name: string; description: string };
   severityScore: number;
   severityLabel: "Low" | "Moderate" | "Severe";
   primaryCauses: { cause: string; explanation: string }[];
   contributingFactors: string[];
   biggestMistake: string;
+  surprisingInsight: string;
+  empoweringSentence: string;
+  immediateAction: string;
   maskRecommendation: {
     type: string;
     description: string;
