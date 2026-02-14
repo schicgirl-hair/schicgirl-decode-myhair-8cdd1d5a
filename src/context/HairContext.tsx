@@ -24,10 +24,21 @@ interface HairContextType extends HairState {
 
 const STORAGE_KEY = "hair-diagnosis-state";
 
+const STATE_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
 function loadState(): Partial<HairState> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed._expiresAt && Date.now() > parsed._expiresAt) {
+        localStorage.removeItem(STORAGE_KEY);
+        return {};
+      }
+      // Never trust isPaid from localStorage — always validate server-side
+      const { _expiresAt, isPaid, ...rest } = parsed;
+      return rest;
+    }
   } catch {}
   return {};
 }
@@ -40,7 +51,8 @@ function saveState(state: HairState) {
       currentStep: state.currentStep,
       results: state.results,
       email: state.email,
-      isPaid: state.isPaid,
+      // isPaid intentionally excluded — must be validated server-side
+      _expiresAt: Date.now() + STATE_EXPIRY_MS,
     }));
   } catch {}
 }
