@@ -18,7 +18,7 @@ const Preview = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("create-payment", {
-        body: {},
+        body: { origin: window.location.origin },
       });
       if (error) throw error;
       if (data?.url) {
