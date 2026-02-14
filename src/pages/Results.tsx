@@ -173,14 +173,12 @@ const Results = () => {
           <p className="text-xs text-muted-foreground font-body mb-4">{t(lang, "idealRoutineDesc")}</p>
           <div className="space-y-3">
             {r.idealRoutine.map((s) => (
-              <div key={s.step} className="flex gap-3">
+            <div key={s.step} className="flex gap-3">
                 <div className="h-7 w-7 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground shrink-0">{s.step}</div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <h5 className="font-body font-semibold text-foreground text-sm">{s.action}</h5>
-                    <span className="text-xs text-gold-dark font-body bg-gold/10 px-2 py-0.5 rounded-full whitespace-nowrap">{s.frequency}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground font-body mt-0.5">{s.detail}</p>
+                <div className="flex-1 min-w-0">
+                  <h5 className="font-body font-semibold text-foreground text-sm">{s.action}</h5>
+                  <span className="inline-block text-xs text-gold-dark font-body bg-gold/10 px-2 py-0.5 rounded-full mt-1">{s.frequency}</span>
+                  <p className="text-xs text-muted-foreground font-body mt-1">{s.detail}</p>
                 </div>
               </div>
             ))}
