@@ -7,18 +7,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const ALLOWED_ORIGINS = [
-  "https://schicgirl-decode-myhair.lovable.app",
-  "https://id-preview--0d05ab04-1dff-4510-87fb-3c99af9b6153.lovable.app",
-];
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Require authentication
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -39,56 +33,56 @@ serve(async (req) => {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
     const userId = claimsData.claims.sub;
 
-    // Check if user already has a paid payment
-    const { data: existingPayment } = await supabase
+    const { session_id } = await req.json();
+    if (!session_id || typeof session_id !== "string") {
+      return new Response(JSON.stringify({ error: "Missing session_id" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Check if already verified
+    const { data: existing } = await supabase
       .from("payments")
-      .select("id")
+      .select("id, status")
+      .eq("stripe_session_id", session_id)
       .eq("user_id", userId)
-      .eq("status", "paid")
       .maybeSingle();
 
-    if (existingPayment) {
-      return new Response(JSON.stringify({ already_paid: true }), {
+    if (existing?.status === "paid") {
+      return new Response(JSON.stringify({ paid: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const origin = req.headers.get("origin") || "";
-    const resolvedOrigin = ALLOWED_ORIGINS.includes(origin)
-      ? origin
-      : ALLOWED_ORIGINS[0];
-
+    // Verify with Stripe
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
 
-    const session = await stripe.checkout.sessions.create({
-      line_items: [{ price: "price_1T0cJr07i779Op3QSZBmvBDC", quantity: 1 }],
-      mode: "payment",
-      success_url: `${resolvedOrigin}/results?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${resolvedOrigin}/preview`,
-      client_reference_id: userId,
-    });
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+    const paid = session.payment_status === "paid";
 
-    // Record pending payment
-    await supabase.from("payments").insert({
-      user_id: userId,
-      stripe_session_id: session.id,
-      status: "pending",
-    });
+    if (paid) {
+      if (existing) {
+        await supabase.from("payments").update({ status: "paid" }).eq("id", existing.id);
+      } else {
+        await supabase.from("payments").insert({
+          user_id: userId,
+          stripe_session_id: session_id,
+          status: "paid",
+        });
+      }
+    }
 
-    return new Response(JSON.stringify({ url: session.url }), {
+    return new Response(JSON.stringify({ paid }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
     });
   } catch (error) {
-    console.error("Payment creation failed:", error);
-    return new Response(JSON.stringify({ error: "Payment processing failed. Please try again." }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+    console.error("Payment verification failed:", error);
+    return new Response(JSON.stringify({ error: "Verification failed" }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
