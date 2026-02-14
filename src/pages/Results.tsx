@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 import {
   Sparkles, AlertTriangle, Lightbulb, Droplets, Shield, Calendar,
   CheckCircle2, XCircle, Heart, Star, ArrowRight, RotateCcw,
-  Scissors, FlaskConical, Leaf, Loader2, Lock
+  Scissors, FlaskConical, Leaf, Loader2, Lock, Mail
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -44,6 +44,8 @@ const Results = () => {
   const [password, setPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
   const [userEmail, setUserEmail] = useState("");
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   // Server-side payment verification + auto-login
   useEffect(() => {
@@ -404,6 +406,46 @@ const Results = () => {
             </Button>
           </a>
         </motion.section>
+
+        {/* Send to Email */}
+        <motion.div {...f(0.52)} className="text-center">
+          <Button
+            variant="outline"
+            size="lg"
+            className="rounded-full text-base px-8 py-5"
+            disabled={sendingEmail || emailSent}
+            onClick={async () => {
+              setSendingEmail(true);
+              try {
+                const { data: { session } } = await supabase.auth.getSession();
+                const email = session?.user?.email || userEmail;
+                if (!email) {
+                  toast.error(lang === "fr" ? "Email introuvable" : "Email not found");
+                  return;
+                }
+                const { error } = await supabase.functions.invoke("send-results-email", {
+                  body: { email, results, lang },
+                });
+                if (error) throw error;
+                setEmailSent(true);
+                toast.success(t(lang, "emailSent"));
+              } catch (err) {
+                console.error("Email error:", err);
+                toast.error(t(lang, "emailFailed"));
+              } finally {
+                setSendingEmail(false);
+              }
+            }}
+          >
+            {sendingEmail ? (
+              <><Loader2 className="h-4 w-4 animate-spin mr-2" /> {t(lang, "sendingEmail")}</>
+            ) : emailSent ? (
+              <><CheckCircle2 className="h-4 w-4 mr-2" /> {t(lang, "emailSent")}</>
+            ) : (
+              <><Mail className="h-4 w-4 mr-2" /> {t(lang, "sendToEmail")}</>
+            )}
+          </Button>
+        </motion.div>
 
         <div className="text-center pb-6">
           <button onClick={() => { reset(); navigate("/"); }} className="text-sm text-muted-foreground font-body hover:text-foreground transition-colors underline">
