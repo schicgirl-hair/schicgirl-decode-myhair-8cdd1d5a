@@ -153,7 +153,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "SchicGirl <noreply@send.decodehair>",
+        from: "SchicGirl <noreply@decodehair.schicgirl.me>",
         to: [email],
         subject: isFr ? "🌿 Ton Diagnostic Capillaire Complet — SchicGirl" : "🌿 Your Complete Hair Diagnosis — SchicGirl",
         html,
