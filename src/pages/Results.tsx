@@ -36,7 +36,7 @@ function Section({ title, icon: Icon, children, delay = 0 }: {
 
 const Results = () => {
   const navigate = useNavigate();
-  const { lang, results, isPaid, email, reset } = useHair();
+  const { lang, results, isPaid, email, reset, setPaid } = useHair();
   const emailSent = useRef(false);
 
   useEffect(() => {
@@ -57,7 +57,20 @@ const Results = () => {
     }
   }, [results, isPaid, email, lang]);
 
-  if (!results || !isPaid) { navigate("/"); return null; }
+  // Check URL param for paid status from Stripe redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("paid") === "true" && !isPaid) {
+      setPaid(true);
+      // Clean up URL
+      window.history.replaceState({}, "", "/results");
+    }
+  }, [isPaid, setPaid]);
+
+  if (!results || (!isPaid && new URLSearchParams(window.location.search).get("paid") !== "true")) {
+    navigate("/");
+    return null;
+  }
 
   const r = results;
   const severityColor =
@@ -67,7 +80,7 @@ const Results = () => {
 
   return (
     <main className="min-h-screen bg-background px-6 py-10 pb-24">
-      <div className="max-w-lg mx-auto space-y-5">
+      <div className="max-w-lg mx-auto space-y-5 overflow-hidden break-words">
         {/* Header */}
         <motion.div {...f(0)} className="text-center mb-6">
           <div className="inline-flex items-center gap-2 rounded-full bg-gold/15 px-4 py-1.5 mb-4">

@@ -36,7 +36,7 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: `${req.headers.get("origin")}/results`,
+      success_url: `${req.headers.get("origin")}/results?paid=true`,
       cancel_url: `${req.headers.get("origin")}/preview`,
     });
 
