@@ -53,17 +53,6 @@ const Index = () => {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="relative z-10 max-w-lg mx-auto text-center"
         >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="inline-flex items-center gap-2 rounded-full bg-secondary px-4 py-1.5 mb-8"
-          >
-            <span className="h-2 w-2 rounded-full gradient-gold" />
-            <span className="text-sm font-body font-medium text-muted-foreground">
-              {t(lang, "badge")}
-            </span>
-          </motion.div>
 
           <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold text-foreground leading-tight mb-4">
             {t(lang, "title1")}{" "}
