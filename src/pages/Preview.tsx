@@ -29,12 +29,12 @@ const Preview = () => {
       });
       if (error) throw error;
       if (data?.url) {
-        // Mark as paid optimistically — Stripe will redirect to /results on success
         setPaid(true);
         window.open(data.url, "_blank");
       }
     } catch (err) {
       console.error("Payment error:", err);
+    } finally {
       setLoading(false);
     }
   };
