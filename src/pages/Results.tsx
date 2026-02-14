@@ -398,7 +398,7 @@ const Results = () => {
         <motion.section {...f(0.5)} className="text-center py-8">
           <h3 className="font-display text-2xl font-bold text-foreground mb-2">{t(lang, "nextLevel")}</h3>
           <p className="text-muted-foreground font-body text-sm mb-6 max-w-sm mx-auto">{t(lang, "contactDesc")}</p>
-          <a href="https://wa.me/YOUR_NUMBER" target="_blank" rel="noopener noreferrer">
+          <a href="https://www.facebook.com/schicgirl" target="_blank" rel="noopener noreferrer">
             <Button variant="hero" size="lg" className="rounded-full text-base px-10 py-6">
               {t(lang, "contactMe")} <ArrowRight className="h-4 w-4 ml-1" />
             </Button>
