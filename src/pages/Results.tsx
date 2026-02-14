@@ -45,7 +45,9 @@ const Results = () => {
   const [savingPassword, setSavingPassword] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [sendingEmail, setSendingEmail] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
+  const [emailSent, setEmailSent] = useState(() => {
+    try { return localStorage.getItem("hair-email-sent") === "true"; } catch { return false; }
+  });
 
   // Server-side payment verification + auto-login
   useEffect(() => {
@@ -449,6 +451,7 @@ const Results = () => {
                 });
                 if (error) throw error;
                 setEmailSent(true);
+                try { localStorage.setItem("hair-email-sent", "true"); } catch {}
                 toast.success(t(lang, "emailSent"));
               } catch (err) {
                 console.error("Email error:", err);
