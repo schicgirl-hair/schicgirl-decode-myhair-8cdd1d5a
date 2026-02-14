@@ -152,153 +152,153 @@ function escapeHtml(str: unknown): string {
 
 function buildEmailHtml(r: Record<string, any>, isFr: boolean, severityLabel: string): string {
   const e = escapeHtml;
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #faf8f5; margin: 0; padding: 0; color: #2d2319; }
-  .container { max-width: 600px; margin: 0 auto; padding: 24px 16px; }
-  .header { text-align: center; padding: 32px 0 24px; }
-  .header h1 { font-size: 24px; color: #2d2319; margin: 0 0 4px; }
-  .header p { color: #8a7a6d; font-size: 14px; margin: 0; }
-  .badge { display: inline-block; background: linear-gradient(135deg, #c9a96e, #b8944a); color: white; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 16px; }
-  .card { background: white; border-radius: 16px; padding: 24px; margin-bottom: 16px; border: 1px solid #e8e0d8; }
-  .card h3 { font-size: 16px; font-weight: 700; margin: 0 0 12px; color: #2d2319; }
-  .severity-score { font-size: 48px; font-weight: 800; margin: 0; }
-  .severity-low { color: #16a34a; }
-  .severity-moderate { color: #b8944a; }
-  .severity-severe { color: #dc2626; }
-  .highlight-box { background: #fef7ec; border: 1px solid #f0dbb8; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-  .warning-box { background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-  .step { display: flex; gap: 12px; margin-bottom: 12px; }
-  .step-num { background: linear-gradient(135deg, #c9a96e, #b8944a); color: white; width: 28px; height: 28px; border-radius: 50%; text-align: center; line-height: 28px; font-size: 12px; font-weight: 700; flex-shrink: 0; }
-  .ingredient-good { color: #16a34a; }
-  .ingredient-bad { color: #dc2626; }
-  .timeline-item { border-left: 3px solid #c9a96e; padding-left: 16px; margin-bottom: 12px; }
-  .footer { text-align: center; padding: 24px 0; color: #8a7a6d; font-size: 12px; }
-  .cta-btn { display: inline-block; background: linear-gradient(135deg, #c9a96e, #b8944a); color: white; padding: 14px 32px; border-radius: 30px; text-decoration: none; font-weight: 600; font-size: 14px; }
-  ul { padding-left: 16px; }
-  li { margin-bottom: 6px; font-size: 14px; color: #4a3f35; }
-  p { font-size: 14px; line-height: 1.6; color: #4a3f35; }
-  .day-badge { display: inline-block; background: #fef7ec; color: #b8944a; font-weight: 700; padding: 4px 10px; border-radius: 8px; font-size: 12px; margin-bottom: 4px; }
-</style>
-</head>
-<body>
-<div class="container">
-  <div class="header">
-    <span class="badge">✨ ${isFr ? "Diagnostic Complet" : "Full Diagnosis"}</span>
-    <h1>${isFr ? "Ton Analyse Capillaire" : "Your Hair Analysis"}</h1>
-    <p>${isFr ? "Résultats personnalisés par SchicGirl" : "Personalized results by SchicGirl"}</p>
-  </div>
+  const sevColor = r.severityLabel === "Low" ? "#16a34a" : r.severityLabel === "Moderate" ? "#b8944a" : "#dc2626";
 
-  <div class="card">
-    <h3>⭐ ${isFr ? "Ton Identité Capillaire" : "Your Hair Identity"}</h3>
-    <div class="highlight-box">
-      <strong style="font-size:18px;color:#b8944a;">${e(r.archetype?.name)}</strong>
-      <p style="margin:8px 0 0;">${e(r.archetype?.description)}</p>
-    </div>
-  </div>
+  const card = (emoji: string, title: string, content: string) =>
+    `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;"><tr><td style="background:#ffffff;border-radius:16px;padding:24px;border:1px solid #e8e0d8;">
+      <p style="font-size:16px;font-weight:700;margin:0 0 12px;color:#2d2319;">${emoji} ${title}</p>${content}
+    </td></tr></table>`;
 
-  <div class="card">
-    <h3>⚠️ ${isFr ? "Sévérité de la Sécheresse" : "Dryness Severity"}</h3>
-    <p class="severity-score severity-${e(r.severityLabel?.toLowerCase())}">${e(r.severityScore)}<span style="font-size:16px;color:#8a7a6d;font-weight:400;">/100 — ${e(severityLabel)}</span></p>
-  </div>
+  const highlight = (content: string) =>
+    `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;"><tr><td style="background:#fef7ec;border:1px solid #f0dbb8;border-radius:12px;padding:16px;">
+      ${content}
+    </td></tr></table>`;
 
-  <div class="highlight-box">
-    <strong>${isFr ? "💡 Le savais-tu ?" : "💡 Did you know?"}</strong>
-    <p style="margin:8px 0 0;">${e(r.surprisingInsight)}</p>
-  </div>
+  const warning = (content: string) =>
+    `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;"><tr><td style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:16px;">
+      ${content}
+    </td></tr></table>`;
 
-  <div class="card">
-    <h3>💡 ${isFr ? "Causes Profondes" : "Root Causes"}</h3>
-    ${Array.isArray(r.primaryCauses) ? r.primaryCauses.map((c: any) => `<div style="margin-bottom:12px;"><strong>${e(c.cause)}</strong><p style="margin:4px 0 0;">${e(c.explanation)}</p></div>`).join("") : ""}
-  </div>
+  const stepRow = (num: string, text: string, sub: string, extra = "") =>
+    `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:10px;"><tr>
+      <td width="32" valign="top" style="padding-right:12px;"><div style="background:linear-gradient(135deg,#c9a96e,#b8944a);color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-size:12px;font-weight:700;">${e(num)}</div></td>
+      <td valign="top"><p style="margin:0;font-size:14px;font-weight:700;color:#2d2319;">${e(text)}</p>${extra}<p style="margin:4px 0 0;font-size:12px;color:#8a7a6d;">${e(sub)}</p></td>
+    </tr></table>`;
 
-  <div class="card">
-    <h3>🔬 ${isFr ? "Facteurs Contributifs" : "Contributing Factors"}</h3>
-    <ul>${Array.isArray(r.contributingFactors) ? r.contributingFactors.map((f: string) => `<li>${e(f)}</li>`).join("") : ""}</ul>
-  </div>
+  // Build sections
+  const causesHtml = Array.isArray(r.primaryCauses) ? r.primaryCauses.map((c: any) =>
+    `<p style="margin:0 0 4px;font-size:14px;font-weight:700;color:#2d2319;">${e(c.cause)}</p><p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#4a3f35;">${e(c.explanation)}</p>`
+  ).join("") : "";
 
-  <div class="warning-box">
-    <strong>⚠️ ${isFr ? "Plus Grande Erreur Détectée" : "Biggest Mistake Detected"}</strong>
-    <p style="margin:8px 0 0;">${e(r.biggestMistake)}</p>
-  </div>
+  const factorsHtml = Array.isArray(r.contributingFactors) ? `<ul style="padding-left:16px;margin:0;">${r.contributingFactors.map((f: string) =>
+    `<li style="margin-bottom:6px;font-size:14px;color:#4a3f35;">${e(f)}</li>`
+  ).join("")}</ul>` : "";
 
-  <div class="highlight-box">
-    <strong>${isFr ? "✨ Rappelle-toi" : "✨ Remember"}</strong>
-    <p style="margin:8px 0 0;font-style:italic;">${e(r.empoweringSentence)}</p>
-    <hr style="border:none;border-top:1px solid #e8e0d8;margin:12px 0;">
-    <strong style="color:#b8944a;">${isFr ? "🎯 Action immédiate" : "🎯 Immediate action"}</strong>
-    <p style="margin:8px 0 0;">${e(r.immediateAction)}</p>
-  </div>
+  const minRoutineHtml = Array.isArray(r.minimumRoutine) ? r.minimumRoutine.map((s: any) =>
+    stepRow(String(s.step), s.action, s.detail)
+  ).join("") : "";
 
-  <div class="card">
-    <h3>💧 ${isFr ? "Masque Recommandé" : "Smart Mask Recommendation"}</h3>
-    <strong style="font-size:16px;">${e(r.maskRecommendation?.type)}</strong>
-    <p>${e(r.maskRecommendation?.description)}</p>
-    <p style="color:#b8944a;font-weight:600;">📅 ${e(r.maskRecommendation?.frequency)}</p>
-    <p style="font-size:12px;color:#8a7a6d;background:#f5f0eb;padding:10px;border-radius:8px;">⚠️ ${e(r.maskRecommendation?.warning)}</p>
-  </div>
+  const idealRoutineHtml = Array.isArray(r.idealRoutine) ? r.idealRoutine.map((s: any) =>
+    stepRow(String(s.step), s.action, s.detail, `<p style="margin:4px 0;font-size:11px;font-weight:700;color:#b8944a;background:#fef7ec;display:inline-block;padding:2px 8px;border-radius:10px;">${e(s.frequency)}</p>`)
+  ).join("") : "";
 
-  <div class="card">
-    <h3>✅ ${isFr ? "Routine Minimum" : "Minimum Routine"}</h3>
-    <p style="font-size:12px;color:#8a7a6d;margin-bottom:12px;">${isFr ? "L'essentiel — simple et efficace" : "The essentials — simple and effective"}</p>
-    ${Array.isArray(r.minimumRoutine) ? r.minimumRoutine.map((s: any) => `<div class="step"><div class="step-num">${e(s.step)}</div><div><strong>${e(s.action)}</strong><br><span style="font-size:12px;color:#8a7a6d;">${e(s.detail)}</span></div></div>`).join("") : ""}
-  </div>
+  const recoveryHtml = Array.isArray(r.recoveryPlan) ? r.recoveryPlan.map((d: any) =>
+    `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:10px;"><tr>
+      <td width="70" valign="top"><span style="display:inline-block;background:#fef7ec;color:#b8944a;font-weight:700;padding:4px 10px;border-radius:8px;font-size:12px;">${e(d.day)}</span></td>
+      <td valign="top"><p style="margin:0;font-size:14px;line-height:1.6;color:#4a3f35;">${e(d.action)}</p></td>
+    </tr></table>`
+  ).join("") : "";
 
-  <div class="card">
-    <h3>✨ ${isFr ? "Routine Idéale" : "Ideal Routine"}</h3>
-    ${Array.isArray(r.idealRoutine) ? r.idealRoutine.map((s: any) => `<div class="step"><div class="step-num">${e(s.step)}</div><div><strong>${e(s.action)}</strong><br><span class="day-badge">${e(s.frequency)}</span><br><span style="font-size:12px;color:#8a7a6d;">${e(s.detail)}</span></div></div>`).join("") : ""}
-  </div>
+  const avoidHtml = Array.isArray(r.ingredientsAvoid) ? r.ingredientsAvoid.map((i: any) =>
+    `<p style="margin:0 0 8px;font-size:14px;"><span style="color:#dc2626;font-weight:700;">✗ ${e(i.name)}</span><br><span style="font-size:12px;color:#8a7a6d;">${e(i.reason)}</span></p>`
+  ).join("") : "";
 
-  <div class="card">
-    <h3>📅 ${isFr ? "Plan de Récupération 7 Jours" : "7-Day Recovery Plan"}</h3>
-    ${Array.isArray(r.recoveryPlan) ? r.recoveryPlan.map((d: any) => `<div class="timeline-item"><span class="day-badge">${e(d.day)}</span><p style="margin:4px 0 0;">${e(d.action)}</p></div>`).join("") : ""}
-  </div>
+  const seekHtml = Array.isArray(r.ingredientsSeek) ? r.ingredientsSeek.map((i: any) =>
+    `<p style="margin:0 0 8px;font-size:14px;"><span style="color:#16a34a;font-weight:700;">✓ ${e(i.name)}</span><br><span style="font-size:12px;color:#8a7a6d;">${e(i.reason)}</span></p>`
+  ).join("") : "";
 
-  <div class="card">
-    <h3>❌ ${isFr ? "Ingrédients à Éviter" : "Ingredients to Avoid"}</h3>
-    ${Array.isArray(r.ingredientsAvoid) ? r.ingredientsAvoid.map((i: any) => `<div style="margin-bottom:8px;"><strong class="ingredient-bad">✗ ${e(i.name)}</strong><br><span style="font-size:12px;color:#8a7a6d;">${e(i.reason)}</span></div>`).join("") : ""}
-  </div>
+  const timelineHtml = Array.isArray(r.timeline) ? r.timeline.map((tl: any) =>
+    `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:12px;"><tr>
+      <td style="border-left:3px solid #c9a96e;padding-left:16px;"><p style="margin:0;font-size:14px;font-weight:700;color:#b8944a;">${e(tl.period)}</p><p style="margin:4px 0 0;font-size:14px;color:#4a3f35;">${e(tl.expectation)}</p></td>
+    </tr></table>`
+  ).join("") : "";
 
-  <div class="card">
-    <h3>🌿 ${isFr ? "Ingrédients à Rechercher" : "Ingredients to Look For"}</h3>
-    ${Array.isArray(r.ingredientsSeek) ? r.ingredientsSeek.map((i: any) => `<div style="margin-bottom:8px;"><strong class="ingredient-good">✓ ${e(i.name)}</strong><br><span style="font-size:12px;color:#8a7a6d;">${e(i.reason)}</span></div>`).join("") : ""}
-  </div>
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#faf8f5;margin:0;padding:0;color:#2d2319;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:24px 16px;">
+<table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;">
 
-  <div class="card">
-    <h3>🔄 ${isFr ? "Calendrier d'Amélioration" : "Improvement Timeline"}</h3>
-    ${Array.isArray(r.timeline) ? r.timeline.map((tl: any) => `<div class="timeline-item"><strong style="color:#b8944a;">${e(tl.period)}</strong><p style="margin:4px 0 0;">${e(tl.expectation)}</p></div>`).join("") : ""}
-  </div>
+  <!-- Header -->
+  <tr><td align="center" style="padding:32px 0 24px;">
+    <span style="display:inline-block;background:linear-gradient(135deg,#c9a96e,#b8944a);color:#fff;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:600;">✨ ${isFr ? "Diagnostic Complet" : "Full Diagnosis"}</span>
+    <h1 style="font-size:24px;color:#2d2319;margin:12px 0 4px;">${isFr ? "Ton Analyse Capillaire" : "Your Hair Analysis"}</h1>
+    <p style="color:#8a7a6d;font-size:14px;margin:0;">${isFr ? "Résultats personnalisés par SchicGirl" : "Personalized results by SchicGirl"}</p>
+  </td></tr>
 
-  <div class="card">
-    <h3>🛡️ ${isFr ? "Stratégie Long Terme" : "Long-Term Strategy"}</h3>
-    <p>${e(r.longTermStrategy)}</p>
-  </div>
+  <!-- Archetype -->
+  <tr><td>${card("⭐", isFr ? "Ton Identité Capillaire" : "Your Hair Identity",
+    `<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="background:#fef7ec;border:1px solid #f0dbb8;border-radius:12px;padding:16px;">
+      <p style="font-size:18px;font-weight:700;color:#b8944a;margin:0 0 8px;">${e(r.archetype?.name)}</p>
+      <p style="margin:0;font-size:14px;line-height:1.6;color:#4a3f35;">${e(r.archetype?.description)}</p>
+    </td></tr></table>`)}</td></tr>
 
-  <div class="highlight-box" style="text-align:center;">
-    <p style="font-size:16px;">❤️</p>
-    <p>${e(r.confidenceMessage)}</p>
-  </div>
+  <!-- Severity -->
+  <tr><td>${card("⚠️", isFr ? "Sévérité de la Sécheresse" : "Dryness Severity",
+    `<p style="font-size:48px;font-weight:800;margin:0;color:${sevColor};">${e(r.severityScore)}<span style="font-size:16px;color:#8a7a6d;font-weight:400;">/100 — ${e(severityLabel)}</span></p>`)}</td></tr>
 
-  <div class="card">
-    <h3>✂️ ${isFr ? "Un Message de Ta Coach Capillaire" : "A Message From Your Hair Coach"}</h3>
-    <p style="white-space:pre-line;">${e(r.coachNote)}</p>
-  </div>
+  <!-- Surprising Insight -->
+  <tr><td>${highlight(`<p style="font-size:14px;font-weight:700;margin:0 0 8px;color:#2d2319;">💡 ${isFr ? "Le savais-tu ?" : "Did you know?"}</p><p style="margin:0;font-size:14px;line-height:1.6;color:#4a3f35;">${e(r.surprisingInsight)}</p>`)}</td></tr>
 
-  <div style="text-align:center;padding:24px 0;">
-    <p style="font-weight:600;font-size:16px;margin-bottom:8px;">${isFr ? "Prête pour l'étape suivante ?" : "Ready for the Next Level?"}</p>
-    <p style="font-size:13px;color:#8a7a6d;margin-bottom:16px;">${isFr ? "Je crée des routines complètes et personnalisées adaptées à ton profil." : "I create complete, personalized routines tailored to your profile."}</p>
-    <a href="https://www.facebook.com/schicgirl" class="cta-btn">${isFr ? "Me Contacter" : "Contact Me"}</a>
-  </div>
+  <!-- Root Causes -->
+  <tr><td>${card("💡", isFr ? "Causes Profondes" : "Root Causes", causesHtml)}</td></tr>
 
-  <div class="footer">
-    <p>© ${new Date().getFullYear()} SchicGirl — Decode My Hair</p>
-  </div>
-</div>
-</body>
-</html>`;
+  <!-- Contributing Factors -->
+  <tr><td>${card("🔬", isFr ? "Facteurs Contributifs" : "Contributing Factors", factorsHtml)}</td></tr>
+
+  <!-- Biggest Mistake -->
+  <tr><td>${warning(`<p style="font-size:14px;font-weight:700;margin:0 0 8px;color:#2d2319;">⚠️ ${isFr ? "Plus Grande Erreur Détectée" : "Biggest Mistake Detected"}</p><p style="margin:0;font-size:14px;line-height:1.6;color:#4a3f35;">${e(r.biggestMistake)}</p>`)}</td></tr>
+
+  <!-- Empowering + Immediate Action -->
+  <tr><td>${highlight(`<p style="font-size:14px;font-weight:700;margin:0 0 8px;color:#2d2319;">✨ ${isFr ? "Rappelle-toi" : "Remember"}</p><p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#4a3f35;font-style:italic;">${e(r.empoweringSentence)}</p><hr style="border:none;border-top:1px solid #e8e0d8;margin:12px 0;"><p style="font-size:14px;font-weight:700;margin:0 0 8px;color:#b8944a;">🎯 ${isFr ? "Action immédiate" : "Immediate action"}</p><p style="margin:0;font-size:14px;line-height:1.6;color:#4a3f35;">${e(r.immediateAction)}</p>`)}</td></tr>
+
+  <!-- Mask Recommendation -->
+  <tr><td>${card("💧", isFr ? "Masque Recommandé" : "Smart Mask Recommendation",
+    `<p style="font-size:16px;font-weight:700;margin:0 0 8px;color:#2d2319;">${e(r.maskRecommendation?.type)}</p>
+     <p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:#4a3f35;">${e(r.maskRecommendation?.description)}</p>
+     <p style="margin:0 0 8px;font-size:14px;color:#b8944a;font-weight:600;">📅 ${e(r.maskRecommendation?.frequency)}</p>
+     <p style="margin:0;font-size:12px;color:#8a7a6d;background:#f5f0eb;padding:10px;border-radius:8px;">⚠️ ${e(r.maskRecommendation?.warning)}</p>`)}</td></tr>
+
+  <!-- Minimum Routine -->
+  <tr><td>${card("✅", isFr ? "Routine Minimum" : "Minimum Routine",
+    `<p style="font-size:12px;color:#8a7a6d;margin:0 0 12px;">${isFr ? "L'essentiel — simple et efficace" : "The essentials — simple and effective"}</p>${minRoutineHtml}`)}</td></tr>
+
+  <!-- Ideal Routine -->
+  <tr><td>${card("✨", isFr ? "Routine Idéale" : "Ideal Routine", idealRoutineHtml)}</td></tr>
+
+  <!-- Recovery Plan -->
+  <tr><td>${card("📅", isFr ? "Plan de Récupération 7 Jours" : "7-Day Recovery Plan", recoveryHtml)}</td></tr>
+
+  <!-- Ingredients Avoid -->
+  <tr><td>${card("❌", isFr ? "Ingrédients à Éviter" : "Ingredients to Avoid", avoidHtml)}</td></tr>
+
+  <!-- Ingredients Seek -->
+  <tr><td>${card("🌿", isFr ? "Ingrédients à Rechercher" : "Ingredients to Look For", seekHtml)}</td></tr>
+
+  <!-- Timeline -->
+  <tr><td>${card("🔄", isFr ? "Calendrier d'Amélioration" : "Improvement Timeline", timelineHtml)}</td></tr>
+
+  <!-- Long-term Strategy -->
+  <tr><td>${card("🛡️", isFr ? "Stratégie Long Terme" : "Long-Term Strategy",
+    `<p style="margin:0;font-size:14px;line-height:1.6;color:#4a3f35;">${e(r.longTermStrategy)}</p>`)}</td></tr>
+
+  <!-- Confidence -->
+  <tr><td>${highlight(`<p style="text-align:center;font-size:16px;margin:0 0 8px;">❤️</p><p style="margin:0;font-size:14px;line-height:1.6;color:#4a3f35;text-align:center;">${e(r.confidenceMessage)}</p>`)}</td></tr>
+
+  <!-- Coach Note -->
+  <tr><td>${card("✂️", isFr ? "Un Message de Ta Coach Capillaire" : "A Message From Your Hair Coach",
+    `<p style="margin:0;font-size:14px;line-height:1.6;color:#4a3f35;white-space:pre-line;">${e(r.coachNote)}</p>`)}</td></tr>
+
+  <!-- CTA -->
+  <tr><td align="center" style="padding:24px 0;">
+    <p style="font-weight:600;font-size:16px;margin:0 0 8px;color:#2d2319;">${isFr ? "Prête pour l'étape suivante ?" : "Ready for the Next Level?"}</p>
+    <p style="font-size:13px;color:#8a7a6d;margin:0 0 16px;">${isFr ? "Je crée des routines complètes et personnalisées adaptées à ton profil." : "I create complete, personalized routines tailored to your profile."}</p>
+    <a href="https://www.facebook.com/schicgirl" style="display:inline-block;background:linear-gradient(135deg,#c9a96e,#b8944a);color:#ffffff;padding:14px 32px;border-radius:30px;text-decoration:none;font-weight:600;font-size:14px;">${isFr ? "Me Contacter" : "Contact Me"}</a>
+  </td></tr>
+
+  <!-- Footer -->
+  <tr><td align="center" style="padding:24px 0;"><p style="color:#8a7a6d;font-size:12px;margin:0;">© ${new Date().getFullYear()} SchicGirl — Decode My Hair</p></td></tr>
+
+</table>
+</td></tr></table>
+</body></html>`;
 }
