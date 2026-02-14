@@ -4,22 +4,38 @@ import { useHair } from "@/context/HairContext";
 import { t } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Lock, Sparkles, AlertTriangle, Lightbulb } from "lucide-react";
+import { Lock, Sparkles, AlertTriangle, Lightbulb, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Preview = () => {
   const navigate = useNavigate();
   const { lang, results, setEmail, setPaid } = useHair();
   const [showEmailCapture, setShowEmailCapture] = useState(false);
   const [emailInput, setEmailInput] = useState("");
+  const [loading, setLoading] = useState(false);
 
   if (!results) { navigate("/"); return null; }
 
-  const handleUnlock = () => {
+  const handleUnlock = async () => {
     if (!showEmailCapture) { setShowEmailCapture(true); return; }
-    if (emailInput.trim() && emailInput.includes("@")) {
-      setEmail(emailInput.trim());
-      setPaid(true);
-      navigate("/results");
+    if (!emailInput.trim() || !emailInput.includes("@")) return;
+
+    setLoading(true);
+    setEmail(emailInput.trim());
+
+    try {
+      const { data, error } = await supabase.functions.invoke("create-payment", {
+        body: { email: emailInput.trim() },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        // Mark as paid optimistically — Stripe will redirect to /results on success
+        setPaid(true);
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error("Payment error:", err);
+      setLoading(false);
     }
   };
 
@@ -108,8 +124,10 @@ const Preview = () => {
               />
             </motion.div>
           )}
-          <Button variant="hero" size="lg" className="w-full rounded-full text-base py-6" onClick={handleUnlock}>
-            {showEmailCapture ? t(lang, "unlockFull") : t(lang, "getFullDiagnosis")}
+          <Button variant="hero" size="lg" className="w-full rounded-full text-base py-6" onClick={handleUnlock} disabled={loading}>
+            {loading ? (
+              <><Loader2 className="h-4 w-4 animate-spin mr-2" /> {t(lang, "processing")}</>
+            ) : showEmailCapture ? t(lang, "unlockFull") : t(lang, "getFullDiagnosis")}
           </Button>
           <p className="text-xs text-muted-foreground mt-3 font-body">{t(lang, "fullDiagnosisAwaits")}</p>
         </motion.div>
