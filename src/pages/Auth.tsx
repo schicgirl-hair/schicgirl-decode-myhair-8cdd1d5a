@@ -20,11 +20,11 @@ const Auth = () => {
   useEffect(() => {
     supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        navigate("/preview");
+        navigate("/results");
       }
     });
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) navigate("/preview");
+      if (session) navigate("/results");
     });
   }, [navigate]);
 

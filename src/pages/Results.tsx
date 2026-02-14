@@ -3,13 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { useHair } from "@/context/HairContext";
 import { t } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
 import {
   Sparkles, AlertTriangle, Lightbulb, Droplets, Shield, Calendar,
   CheckCircle2, XCircle, Heart, Star, ArrowRight, RotateCcw,
-  Scissors, FlaskConical, Leaf, Loader2
+  Scissors, FlaskConical, Leaf, Loader2, Lock
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const f = (delay: number) => ({
   initial: { opacity: 0, y: 20 },
@@ -37,8 +40,12 @@ const Results = () => {
   const navigate = useNavigate();
   const { lang, results, isPaid, reset, setPaid } = useHair();
   const [verifying, setVerifying] = useState(false);
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+  const [password, setPassword] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
 
-  // Server-side payment verification
+  // Server-side payment verification + auto-login
   useEffect(() => {
     const verifyPayment = async () => {
       const params = new URLSearchParams(window.location.search);
@@ -47,7 +54,7 @@ const Results = () => {
       if (isPaid) return; // Already verified
 
       if (!sessionId) {
-        // No session_id and not paid — check DB for existing payment
+        // No session_id — check if user is logged in and has a payment
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
           navigate("/preview");
@@ -74,9 +81,27 @@ const Results = () => {
           body: { session_id: sessionId },
         });
         if (error) throw error;
+
         if (data?.paid) {
           setPaid(true);
+          setUserEmail(data.email || "");
           window.history.replaceState({}, "", "/results");
+
+          // Auto-login with magic link token
+          if (data.token_hash) {
+            const { error: otpError } = await supabase.auth.verifyOtp({
+              token_hash: data.token_hash,
+              type: "magiclink",
+            });
+            if (otpError) {
+              console.error("Auto-login failed:", otpError);
+            }
+
+            // Prompt to set password if new user
+            if (data.needs_password) {
+              setShowPasswordPrompt(true);
+            }
+          }
         } else {
           navigate("/preview");
         }
@@ -90,6 +115,21 @@ const Results = () => {
 
     verifyPayment();
   }, [isPaid, setPaid, navigate]);
+
+  const handleSetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+      toast.success(lang === "fr" ? "Mot de passe enregistré ! Vous pourrez vous reconnecter." : "Password saved! You can log back in anytime.");
+      setShowPasswordPrompt(false);
+    } catch (err: any) {
+      toast.error(err.message || "Error saving password");
+    } finally {
+      setSavingPassword(false);
+    }
+  };
 
   if (verifying) {
     return (
@@ -117,6 +157,41 @@ const Results = () => {
   return (
     <main className="min-h-screen bg-background px-6 py-10 pb-24">
       <div className="max-w-lg mx-auto space-y-5 overflow-hidden break-words">
+
+        {/* Password setup prompt */}
+        {showPasswordPrompt && (
+          <motion.div {...f(0)} className="bg-gold/10 rounded-2xl p-6 border border-gold/20">
+            <div className="flex items-center gap-3 mb-3">
+              <Lock className="h-5 w-5 text-gold" />
+              <h3 className="font-display text-lg font-semibold text-foreground">
+                {lang === "fr" ? "Sauvegardez vos résultats" : "Save your results"}
+              </h3>
+            </div>
+            <p className="text-sm font-body text-muted-foreground mb-4">
+              {lang === "fr"
+                ? `Créez un mot de passe pour ${userEmail} afin de pouvoir consulter vos résultats à tout moment.`
+                : `Set a password for ${userEmail} so you can access your results anytime.`}
+            </p>
+            <form onSubmit={handleSetPassword} className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm">{lang === "fr" ? "Mot de passe" : "Password"}</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  placeholder={lang === "fr" ? "6 caractères minimum" : "Min 6 characters"}
+                />
+              </div>
+              <Button type="submit" variant="hero" className="w-full rounded-full" disabled={savingPassword}>
+                {savingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : (lang === "fr" ? "Enregistrer" : "Save")}
+              </Button>
+            </form>
+          </motion.div>
+        )}
+
         {/* Header */}
         <motion.div {...f(0)} className="text-center mb-6">
           <div className="inline-flex items-center gap-2 rounded-full bg-gold/15 px-4 py-1.5 mb-4">

@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,44 +17,6 @@ serve(async (req) => {
   }
 
   try {
-    // Require authentication
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const userId = claimsData.claims.sub;
-
-    // Check if user already has a paid payment
-    const { data: existingPayment } = await supabase
-      .from("payments")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("status", "paid")
-      .maybeSingle();
-
-    if (existingPayment) {
-      return new Response(JSON.stringify({ already_paid: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const origin = req.headers.get("origin") || "";
     const resolvedOrigin = ALLOWED_ORIGINS.includes(origin)
       ? origin
@@ -65,19 +26,12 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil",
     });
 
+    // No auth required — Stripe collects the email
     const session = await stripe.checkout.sessions.create({
       line_items: [{ price: "price_1T0cJr07i779Op3QSZBmvBDC", quantity: 1 }],
       mode: "payment",
       success_url: `${resolvedOrigin}/results?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${resolvedOrigin}/preview`,
-      client_reference_id: userId,
-    });
-
-    // Record pending payment
-    await supabase.from("payments").insert({
-      user_id: userId,
-      stripe_session_id: session.id,
-      status: "pending",
     });
 
     return new Response(JSON.stringify({ url: session.url }), {

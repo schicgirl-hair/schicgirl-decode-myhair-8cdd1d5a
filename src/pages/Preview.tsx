@@ -17,20 +17,8 @@ const Preview = () => {
   const handleUnlock = async () => {
     setLoading(true);
     try {
-      // Check if user is authenticated
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
-
       const { data, error } = await supabase.functions.invoke("create-payment");
       if (error) throw error;
-
-      if (data?.already_paid) {
-        navigate("/results");
-        return;
-      }
 
       if (data?.url) {
         window.location.href = data.url;
