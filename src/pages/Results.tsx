@@ -423,12 +423,27 @@ const Results = () => {
             onClick={async () => {
               setSendingEmail(true);
               try {
+                // Always fetch fresh session to get email
                 const { data: { session } } = await supabase.auth.getSession();
-                const email = session?.user?.email || userEmail;
-                if (!email) {
-                  toast.error(lang === "fr" ? "Email introuvable" : "Email not found");
-                  return;
+                let email = session?.user?.email || userEmail;
+                
+                // If still no email, try to get it from user metadata
+                if (!email && session?.user) {
+                  email = session.user.user_metadata?.email || session.user.email || "";
                 }
+                
+                if (!email) {
+                  // Last resort: ask user for email
+                  const inputEmail = window.prompt(
+                    lang === "fr" ? "Entrez votre adresse email :" : "Enter your email address:"
+                  );
+                  if (!inputEmail) {
+                    setSendingEmail(false);
+                    return;
+                  }
+                  email = inputEmail;
+                }
+                
                 const { error } = await supabase.functions.invoke("send-results-email", {
                   body: { email, results, lang },
                 });
