@@ -1,10 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { useHair } from "@/context/HairContext";
 import { quizQuestions } from "@/lib/questions";
-import { Button } from "@/components/ui/button";
 import { t } from "@/lib/i18n";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 const Quiz = () => {
   const navigate = useNavigate();
@@ -14,11 +13,17 @@ const Quiz = () => {
   const progress = ((currentStep + 1) / total) * 100;
   const selected = answers[question.id] || "";
 
-  const handleSelect = (value: string) => setAnswer(question.id, value);
-
-  const handleNext = () => {
-    if (currentStep < total - 1) setStep(currentStep + 1);
-    else { generateResults(); navigate("/preview"); }
+  const handleSelect = (value: string) => {
+    setAnswer(question.id, value);
+    // Auto-advance after a short delay
+    setTimeout(() => {
+      if (currentStep < total - 1) {
+        setStep(currentStep + 1);
+      } else {
+        generateResults();
+        navigate("/preview");
+      }
+    }, 350);
   };
 
   const handleBack = () => {
@@ -79,14 +84,6 @@ const Quiz = () => {
               </div>
             </motion.div>
           </AnimatePresence>
-
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: selected ? 1 : 0.4 }} className="mt-10">
-            <Button variant="hero" size="lg" className="w-full rounded-full text-base py-6" disabled={!selected} onClick={handleNext}>
-              {currentStep < total - 1 ? (
-                <>{t(lang, "continueBtn")} <ArrowRight className="h-4 w-4 ml-1" /></>
-              ) : t(lang, "seeResults")}
-            </Button>
-          </motion.div>
         </div>
       </div>
     </main>

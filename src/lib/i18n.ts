@@ -32,10 +32,14 @@ const ui: Translations = {
   smartMaskRec: { fr: "Recommandation Masque", en: "Smart Mask Recommendation" },
   ingredientLists: { fr: "Listes d'Ingrédients", en: "Ingredient Lists" },
   personalizedRoutine: { fr: "Routine Personnalisée", en: "Personalized Routine" },
-  unlockFull: { fr: "Débloquer Mon Diagnostic Complet", en: "Unlock My Full Diagnosis" },
-  getFullDiagnosis: { fr: "Obtenir Mon Diagnostic Complet", en: "Get My Full Diagnosis" },
+  unlockFull: { fr: "Payer $7 — Débloquer Mon Diagnostic", en: "Pay $7 — Unlock My Diagnosis" },
+  getFullDiagnosis: { fr: "Obtenir Mon Diagnostic Complet — $7", en: "Get My Full Diagnosis — $7" },
   emailPlaceholder: { fr: "Entre ton email pour continuer", en: "Enter your email to continue" },
-  fullDiagnosisAwaits: { fr: "Ta routine personnalisée, ton plan de récupération et les recommandations de ton experte t'attendent.", en: "Your personalized routine, recovery plan, and expert recommendations await." },
+  fullDiagnosisAwaits: { fr: "Ta routine personnalisée, ton plan de récupération et les recommandations de ton experte t'attendent — pour seulement $7.", en: "Your personalized routine, recovery plan, and expert recommendations await — for only $7." },
+  processing: { fr: "Redirection vers le paiement...", en: "Redirecting to payment..." },
+  contactForMore: { fr: "Pour aller plus loin, contacte-moi directement :", en: "To go further, contact me directly:" },
+  contactDesc: { fr: "Je crée des routines complètes et personnalisées adaptées à ton profil capillaire, tes produits et tes objectifs.", en: "I create complete, personalized routines tailored to your hair profile, products, and goals." },
+  contactMe: { fr: "Me Contacter", en: "Contact Me" },
 
   // Results
   fullDiagnosis: { fr: "Diagnostic Complet", en: "Full Diagnosis" },
