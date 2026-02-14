@@ -1,15 +1,13 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useHair } from "@/context/HairContext";
 import { t } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
 import {
   Sparkles, AlertTriangle, Lightbulb, Droplets, Shield, Calendar,
   CheckCircle2, XCircle, Heart, Star, ArrowRight, RotateCcw,
-  Scissors, FlaskConical, Leaf, Zap, Target
+  Scissors, FlaskConical, Leaf
 } from "lucide-react";
 
 const f = (delay: number) => ({
@@ -36,33 +34,13 @@ function Section({ title, icon: Icon, children, delay = 0 }: {
 
 const Results = () => {
   const navigate = useNavigate();
-  const { lang, results, isPaid, email, reset, setPaid } = useHair();
-  const emailSent = useRef(false);
-
-  useEffect(() => {
-    if (results && isPaid && email && !emailSent.current) {
-      emailSent.current = true;
-      supabase.functions.invoke("send-results", {
-        body: { email, results, lang },
-      }).then(({ error }) => {
-        if (error) {
-          console.error("Email send error:", error);
-        } else {
-          toast({
-            title: lang === "fr" ? "📧 Résultats envoyés !" : "📧 Results sent!",
-            description: lang === "fr" ? `Un email a été envoyé à ${email}` : `An email has been sent to ${email}`,
-          });
-        }
-      });
-    }
-  }, [results, isPaid, email, lang]);
+  const { lang, results, isPaid, reset, setPaid } = useHair();
 
   // Check URL param for paid status from Stripe redirect
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("paid") === "true" && !isPaid) {
       setPaid(true);
-      // Clean up URL
       window.history.replaceState({}, "", "/results");
     }
   }, [isPaid, setPaid]);
