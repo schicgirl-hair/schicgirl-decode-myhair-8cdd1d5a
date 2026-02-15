@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 const ALLOWED_ORIGINS = [
+  "https://decodehair.schicgirl.me",
   "https://schicgirl-decode-myhair.lovable.app",
   "https://id-preview--0d05ab04-1dff-4510-87fb-3c99af9b6153.lovable.app",
 ];
@@ -46,7 +47,7 @@ serve(async (req) => {
     const origin = req.headers.get("origin") || "";
     const resolvedOrigin = ALLOWED_ORIGINS.includes(origin)
       ? origin
-      : ALLOWED_ORIGINS[0];
+      : "https://decodehair.schicgirl.me";
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
@@ -57,7 +58,7 @@ serve(async (req) => {
       line_items: [{ price: "price_1T0cJr07i779Op3QSZBmvBDC", quantity: 1 }],
       mode: "payment",
       success_url: `${resolvedOrigin}/results?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${resolvedOrigin}/preview`,
+      cancel_url: `${resolvedOrigin}/`,
     });
 
     return new Response(JSON.stringify({ url: session.url }), {
